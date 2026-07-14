@@ -1,0 +1,20 @@
+{
+  "name": "winston",
+  "version": "1.0.0",
+  "description": "Kindle highlights reader, backed by Baserow",
+  "main": "sync.js",
+  "scripts": {
+    "sync": "node --env-file=.env sync.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "playwright": "^1.61.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.61.1",
+    "@types/node": "^26.1.1"
+  }
+}

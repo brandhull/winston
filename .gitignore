@@ -1,0 +1,7 @@
+node_modules/
+.env
+auth-state.json
+test-results/
+playwright-report/
+poll-sync.log
+.sync.lock

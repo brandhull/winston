@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Winston</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="apple-touch-icon" href="/favicon.svg" />
+<link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+
+<div id="pin-screen" class="pin-screen">
+  <form id="pin-form">
+    <h1>Winston</h1>
+    <input id="pin-input" type="password" placeholder="PIN" autocomplete="off" />
+    <button type="submit">Unlock</button>
+    <p id="pin-error" class="error"></p>
+  </form>
+</div>
+
+<div id="app" class="app hidden">
+  <header class="topbar">
+    <div class="topbar-row">
+      <h1>Winston</h1>
+      <button id="sync-btn" class="sync-btn">↻ Sync</button>
+    </div>
+    <div id="sync-status" class="sync-status"></div>
+    <nav class="tabs">
+      <button class="tab-btn active" data-tab="all">All Highlights</button>
+      <button class="tab-btn" data-tab="review">Review</button>
+    </nav>
+  </header>
+
+  <section id="tab-all" class="tab-panel active">
+    <div class="controls">
+      <input id="search-input" type="search" placeholder="Search highlights..." class="search-box" />
+      <select id="book-filter"><option value="">All books</option></select>
+      <select id="status-filter">
+        <option value="all">All</option>
+        <option value="uncommented">No comment yet</option>
+        <option value="commented">Commented</option>
+      </select>
+    </div>
+    <div id="all-list" class="list"></div>
+  </section>
+
+  <section id="tab-review" class="tab-panel">
+    <div class="controls">
+      <button id="review-today-btn" class="mode-btn active">Today's Review</button>
+      <button id="review-all-btn" class="mode-btn">All Starred</button>
+      <button id="review-shuffle-btn" title="Get a new set">↻ Shuffle</button>
+    </div>
+    <div id="review-list" class="list"></div>
+  </section>
+</div>
+
+<script src="/app.js"></script>
+</body>
+</html>
