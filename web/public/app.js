@@ -149,12 +149,13 @@
   }
 
   function populateBookFilter() {
-    const seen = new Map(); // title -> count, insertion order preserved
+    const seen = new Map();
     for (const h of state.highlights) {
       seen.set(h.book_title, (seen.get(h.book_title) || 0) + 1);
     }
+    const sorted = [...seen].sort((a, b) => a[0].localeCompare(b[0]));
     const select = $('#book-filter');
-    for (const [title, count] of seen) {
+    for (const [title, count] of sorted) {
       const opt = document.createElement('option');
       opt.value = title;
       opt.textContent = `${title} (${count})`;
