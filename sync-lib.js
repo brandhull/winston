@@ -44,7 +44,7 @@ async function getContext(browser, { interactive }) {
     if (!interactive) {
       await context.close();
       throw new SessionExpiredError(
-        'Amazon session expired or not logged in — run `npm run sync` manually to re-authenticate.'
+        'Amazon session expired or not logged in — run `cd ~/Projects/winston && npm run sync` manually to re-authenticate.'
       );
     }
     console.log('\nNot logged in (or session expired). Log in in the browser window —');
