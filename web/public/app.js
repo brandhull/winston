@@ -68,7 +68,15 @@
     setupReviewControls();
     setupSync();
 
-    state.highlights = await api('/api/highlights');
+    try {
+      state.highlights = await api('/api/highlights');
+    } catch (err) {
+      const msg =
+        "Can't load your highlights right now — Baserow (the backend this app relies on) seems to be down. Try refreshing in a few minutes.";
+      $('#all-list').innerHTML = `<div class="empty-state">${msg}</div>`;
+      $('#review-list').innerHTML = `<div class="empty-state">${msg}</div>`;
+      return;
+    }
 
     populateBookFilter();
     $('#book-filter').addEventListener('change', renderAllTab);
@@ -94,14 +102,18 @@
   }
 
   async function refreshSyncStatus() {
+    const btn = $('#sync-btn');
+    const label = $('#sync-status');
+
     let row;
     try {
       row = await api('/api/sync-status');
     } catch (err) {
+      btn.disabled = true;
+      label.classList.add('error');
+      label.textContent = "Can't reach Baserow right now — sync status unavailable. Try again shortly.";
       return;
     }
-    const btn = $('#sync-btn');
-    const label = $('#sync-status');
     const statusValue = row && row.status ? row.status.value : 'idle';
 
     label.classList.toggle('error', statusValue === 'error');

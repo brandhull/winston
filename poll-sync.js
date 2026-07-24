@@ -16,6 +16,17 @@ function log(msg) {
   console.log(line);
 }
 
+const BASEROW_DOWN_PATTERN = /\b(500|502|503|504)\b|upstream connect error|ECONNREFUSED|ETIMEDOUT/i;
+
+/** Baserow itself being flaky produces noisy HTML/proxy error bodies — collapse those to one clear line. */
+function describeError(err) {
+  const raw = err.message || String(err);
+  if (BASEROW_DOWN_PATTERN.test(raw)) {
+    return "Baserow (the backend) appears to be down or unreachable right now — this isn't a Winston bug, it should resolve on its own. Will retry automatically.";
+  }
+  return raw;
+}
+
 function acquireLock() {
   if (fs.existsSync(LOCK_PATH)) {
     const age = Date.now() - fs.statSync(LOCK_PATH).mtimeMs;
@@ -61,9 +72,7 @@ async function main() {
     log(`Sync complete — ${result.totalInserted} new highlight(s).`);
   } catch (err) {
     const message =
-      err instanceof SessionExpiredError
-        ? err.message
-        : `Sync failed: ${err.message || String(err)}`;
+      err instanceof SessionExpiredError ? err.message : `Sync failed: ${describeError(err)}`;
     log(message);
     await setSyncStatus(status.id, { status: 'error', last_error: message }).catch(() => {});
   } finally {
@@ -72,7 +81,7 @@ async function main() {
 }
 
 main().catch((err) => {
-  log(`Unexpected poller error: ${err.message || String(err)}`);
+  log(describeError(err));
   releaseLock();
   process.exit(1);
 });
