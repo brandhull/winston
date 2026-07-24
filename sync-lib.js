@@ -33,7 +33,13 @@ async function getContext(browser, { interactive }) {
     hasStoredSession ? { storageState: STORAGE_STATE_PATH } : {}
   );
   const page = await context.newPage();
-  await page.goto(NOTEBOOK_URL);
+  try {
+    await page.goto(NOTEBOOK_URL, { waitUntil: 'commit' });
+  } catch (err) {
+    // Amazon's page sometimes redirects/reloads client-side before the
+    // navigation settles, which Playwright surfaces as ERR_ABORTED. The
+    // loggedIn check below is authoritative regardless of how goto() ended.
+  }
 
   const loggedIn = await page
     .waitForSelector(SEL.bookRow, { timeout: 8000 })
