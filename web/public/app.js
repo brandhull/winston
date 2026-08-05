@@ -2,6 +2,16 @@
   const REVIEW_COUNT = 8;
   const PIN_KEY = 'winston_pin';
 
+  const SCROLL_ICON = `<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M6 4h10.5a2.5 2.5 0 0 1 0 5H8"/>
+    <path d="M18 20H7.5a2.5 2.5 0 0 1 0-5H16"/>
+    <path d="M6 4a2.5 2.5 0 0 0 0 5"/>
+    <path d="M18 20a2.5 2.5 0 0 0 0-5"/>
+    <line x1="8" y1="9" x2="16.5" y2="9"/>
+    <line x1="7.5" y1="15" x2="16" y2="15"/>
+  </svg>`;
+  const CHECK_ICON = `<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+
   const state = {
     pin: localStorage.getItem(PIN_KEY) || '',
     highlights: [],
@@ -250,7 +260,7 @@
 
     const pushBtn = document.createElement('button');
     pushBtn.className = 'push-btn' + (h.seneca_row_id ? ' pushed' : '');
-    pushBtn.textContent = '📜';
+    pushBtn.innerHTML = SCROLL_ICON;
     pushBtn.title = h.seneca_row_id ? 'Already in Seneca — click to update it' : 'Push to Seneca';
     pushBtn.addEventListener('click', () => pushToSeneca(h, pushBtn));
 
@@ -326,9 +336,9 @@
 
       btn.classList.add('pushed');
       btn.title = 'Already in Seneca — click to update it';
-      btn.textContent = '✓';
+      btn.innerHTML = CHECK_ICON;
       setTimeout(() => {
-        btn.textContent = '📜';
+        btn.innerHTML = SCROLL_ICON;
         btn.disabled = false;
       }, 1500);
     } catch (err) {

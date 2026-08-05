@@ -6,6 +6,7 @@
   --accent: #2563eb;
   --accent-fg: #ffffff;
   --star: #eab308;
+  --pushed: #16a34a;
   --card-bg: #f7f7f8;
 }
 
@@ -18,6 +19,7 @@
     --accent: #5b9bff;
     --accent-fg: #0a0a0a;
     --star: #facc15;
+    --pushed: #4ade80;
     --card-bg: #1c1c1e;
   }
 }
@@ -174,7 +176,7 @@ body {
 .card-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: stretch;
   gap: 0.5rem;
 }
 .card-book { font-size: 0.75rem; color: var(--muted); margin-bottom: 0.25rem; }
@@ -185,7 +187,7 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.35rem;
+  justify-content: space-between;
   flex-shrink: 0;
 }
 
@@ -202,20 +204,13 @@ body {
 .push-btn {
   border: none;
   background: none;
-  font-size: 1.05rem;
+  padding: 0;
   cursor: pointer;
   line-height: 1;
-  opacity: 0.6;
-  padding: 0.15rem;
-  border-radius: 50%;
+  color: var(--border);
 }
-.push-btn:hover { opacity: 1; }
 .push-btn:disabled { cursor: default; }
-.push-btn.pushed {
-  opacity: 1;
-  background: rgba(34, 197, 94, 0.18);
-  box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.4);
-}
+.push-btn.pushed { color: var(--pushed); }
 
 .comment-box {
   width: 100%;
