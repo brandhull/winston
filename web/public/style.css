@@ -181,6 +181,14 @@ body {
 .card-text { white-space: pre-wrap; line-height: 1.4; }
 .card-meta { font-size: 0.75rem; color: var(--muted); margin-top: 0.35rem; }
 
+.card-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
 .star-btn {
   border: none;
   background: none;
@@ -188,9 +196,19 @@ body {
   cursor: pointer;
   line-height: 1;
   color: var(--border);
-  flex-shrink: 0;
 }
 .star-btn.starred { color: var(--star); }
+
+.push-btn {
+  border: none;
+  background: none;
+  font-size: 1.05rem;
+  cursor: pointer;
+  line-height: 1;
+  opacity: 0.6;
+}
+.push-btn:hover { opacity: 1; }
+.push-btn:disabled { cursor: default; }
 
 .comment-box {
   width: 100%;

@@ -248,8 +248,19 @@
     starBtn.title = h.starred ? 'Unstar' : 'Star for review';
     starBtn.addEventListener('click', () => toggleStar(h, starBtn));
 
+    const pushBtn = document.createElement('button');
+    pushBtn.className = 'push-btn';
+    pushBtn.textContent = '📜';
+    pushBtn.title = 'Push to Seneca';
+    pushBtn.addEventListener('click', () => pushToSeneca(h, pushBtn));
+
+    const actions = document.createElement('div');
+    actions.className = 'card-actions';
+    actions.appendChild(starBtn);
+    actions.appendChild(pushBtn);
+
     header.appendChild(textWrap);
-    header.appendChild(starBtn);
+    header.appendChild(actions);
     card.appendChild(header);
 
     const commentBox = document.createElement('textarea');
@@ -289,6 +300,24 @@
       btn.classList.toggle('starred', !next);
       btn.textContent = !next ? '★' : '☆';
       alert('Could not save star — check connection.');
+    }
+  }
+
+  async function pushToSeneca(h, btn) {
+    btn.disabled = true;
+    try {
+      await api('/api/push-to-seneca', {
+        method: 'POST',
+        body: JSON.stringify({ quote: h.highlight_text, author: h.author }),
+      });
+      btn.textContent = '✓';
+      setTimeout(() => {
+        btn.textContent = '📜';
+        btn.disabled = false;
+      }, 1500);
+    } catch (err) {
+      btn.disabled = false;
+      alert('Could not push to Seneca — check connection.');
     }
   }
 
