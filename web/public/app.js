@@ -249,9 +249,9 @@
     starBtn.addEventListener('click', () => toggleStar(h, starBtn));
 
     const pushBtn = document.createElement('button');
-    pushBtn.className = 'push-btn';
+    pushBtn.className = 'push-btn' + (h.seneca_row_id ? ' pushed' : '');
     pushBtn.textContent = '📜';
-    pushBtn.title = 'Push to Seneca';
+    pushBtn.title = h.seneca_row_id ? 'Already in Seneca — click to update it' : 'Push to Seneca';
     pushBtn.addEventListener('click', () => pushToSeneca(h, pushBtn));
 
     const actions = document.createElement('div');
@@ -306,10 +306,26 @@
   async function pushToSeneca(h, btn) {
     btn.disabled = true;
     try {
-      await api('/api/push-to-seneca', {
+      const row = await api('/api/push-to-seneca', {
         method: 'POST',
-        body: JSON.stringify({ quote: h.highlight_text, author: h.author }),
+        body: JSON.stringify({
+          quote: h.highlight_text,
+          author: h.author,
+          comment: h.comment,
+          senecaRowId: h.seneca_row_id || null,
+        }),
       });
+
+      if (String(row.id) !== String(h.seneca_row_id)) {
+        h.seneca_row_id = String(row.id);
+        api(`/api/highlights/${h.id}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ seneca_row_id: h.seneca_row_id }),
+        }).catch(() => {});
+      }
+
+      btn.classList.add('pushed');
+      btn.title = 'Already in Seneca — click to update it';
       btn.textContent = '✓';
       setTimeout(() => {
         btn.textContent = '📜';

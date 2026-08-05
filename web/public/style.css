@@ -206,9 +206,16 @@ body {
   cursor: pointer;
   line-height: 1;
   opacity: 0.6;
+  padding: 0.15rem;
+  border-radius: 50%;
 }
 .push-btn:hover { opacity: 1; }
 .push-btn:disabled { cursor: default; }
+.push-btn.pushed {
+  opacity: 1;
+  background: rgba(34, 197, 94, 0.18);
+  box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.4);
+}
 
 .comment-box {
   width: 100%;
