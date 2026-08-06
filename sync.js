@@ -14,9 +14,16 @@ async function updateSharedStatus(fields) {
   }
 }
 
+function parseMaxBooks() {
+  const arg = process.argv.find((a) => a.startsWith('--recent='));
+  if (!arg) return null;
+  const n = parseInt(arg.split('=')[1], 10);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
 async function main() {
   try {
-    await runSync({ interactive: true });
+    await runSync({ interactive: true, maxBooks: parseMaxBooks() });
     await updateSharedStatus({
       status: 'idle',
       last_synced_at: new Date().toISOString(),

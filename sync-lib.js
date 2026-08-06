@@ -13,6 +13,7 @@ const STORAGE_STATE_PATH = path.join(__dirname, 'auth-state.json');
 // current selectors as of this writing. If scraping comes back empty,
 // inspect the live page and update the values below.
 const SEL = {
+  libraryContainer: '#kp-notebook-library',
   bookRow: '#kp-notebook-library .kp-notebook-library-each-book',
   bookTitle: 'h2.kp-notebook-searchable',
   bookAuthor: 'p.kp-notebook-searchable',
@@ -60,6 +61,24 @@ async function getContext(browser, { interactive }) {
 
   await context.storageState({ path: STORAGE_STATE_PATH });
   return { context, page };
+}
+
+async function loadAllBooks(page, log) {
+  let previousCount = -1;
+  for (let i = 0; i < 300; i++) {
+    const count = await page.locator(SEL.bookRow).count();
+    if (count === previousCount) break;
+    previousCount = count;
+
+    await page
+      .locator(SEL.libraryContainer)
+      .evaluate((el) => {
+        el.scrollTop = el.scrollHeight;
+      })
+      .catch(() => {});
+    await page.waitForTimeout(400);
+  }
+  log(`Loaded ${previousCount} book(s) after scrolling the library list.`);
 }
 
 async function loadAllHighlights(page) {
@@ -129,7 +148,7 @@ async function scrapeBook(page, bookRow) {
  * SessionExpiredError if login would be required, since no one is there to
  * complete it.
  */
-async function runSync({ interactive = true, log = console.log } = {}) {
+async function runSync({ interactive = true, log = console.log, maxBooks = null } = {}) {
   const browser = await chromium.launch({ headless: !interactive });
   let context;
   try {
@@ -141,8 +160,17 @@ async function runSync({ interactive = true, log = console.log } = {}) {
     const existingUids = await fetchExistingUids();
     log(`Found ${existingUids.size} existing highlights.`);
 
-    const bookCount = await page.locator(SEL.bookRow).count();
+    await loadAllBooks(page, log);
+    let bookCount = await page.locator(SEL.bookRow).count();
     log(`Found ${bookCount} books in your Kindle library.`);
+
+    // Amazon's library list is sorted with the most recently highlighted/added
+    // books first, so capping here covers "what did I just highlight" without
+    // a full sweep of the whole library.
+    if (maxBooks && bookCount > maxBooks) {
+      log(`Limiting to the ${maxBooks} most recently active books for a faster sync.`);
+      bookCount = maxBooks;
+    }
 
     const cappedBooks = [];
     const syncedAt = new Date().toISOString().slice(0, 10);
@@ -150,7 +178,14 @@ async function runSync({ interactive = true, log = console.log } = {}) {
 
     for (let i = 0; i < bookCount; i++) {
       const bookRow = page.locator(SEL.bookRow).nth(i);
-      const { title, author, highlights, capped } = await scrapeBook(page, bookRow);
+      let scraped;
+      try {
+        scraped = await scrapeBook(page, bookRow);
+      } catch (err) {
+        log(`  Skipping a book — couldn't scrape it: ${err.message || err}`);
+        continue;
+      }
+      const { title, author, highlights, capped } = scraped;
 
       if (capped) cappedBooks.push(title);
 

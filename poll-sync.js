@@ -11,6 +11,11 @@ const { getSyncStatus, setSyncStatus } = require('./baserow');
 const LOCK_PATH = path.join(__dirname, '.sync.lock');
 const LOCK_STALE_MS = 30 * 60 * 1000; // a sync should never take this long
 
+// Remote/unattended syncs (triggered from the web app) prioritize speed —
+// only check the most recently active books rather than sweeping the whole
+// library. Run `npm run sync` manually for a full scan.
+const MAX_BOOKS = 25;
+
 function log(msg) {
   const line = `[${new Date().toISOString()}] ${msg}`;
   console.log(line);
@@ -62,7 +67,7 @@ async function main() {
     log('Sync requested — starting unattended run.');
     await setSyncStatus(status.id, { status: 'running' });
 
-    const result = await runSync({ interactive: false, log });
+    const result = await runSync({ interactive: false, log, maxBooks: MAX_BOOKS });
 
     await setSyncStatus(status.id, {
       status: 'idle',
