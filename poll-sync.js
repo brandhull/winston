@@ -14,7 +14,7 @@ const LOCK_STALE_MS = 30 * 60 * 1000; // a sync should never take this long
 // Remote/unattended syncs (triggered from the web app) prioritize speed —
 // only check the most recently active books rather than sweeping the whole
 // library. Run `npm run sync` manually for a full scan.
-const MAX_BOOKS = 25;
+const MAX_BOOKS = 10;
 
 function log(msg) {
   const line = `[${new Date().toISOString()}] ${msg}`;
