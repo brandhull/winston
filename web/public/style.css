@@ -156,6 +156,63 @@ body {
   font-size: 0.95rem;
   max-width: 100%;
 }
+
+.manage-books-btn {
+  cursor: pointer;
+  margin-left: auto;
+  padding: 0.5rem 1.1rem;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 1rem;
+}
+.modal {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.25rem;
+  width: 100%;
+  max-width: 420px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+.modal h2 { margin: 0 0 0.5rem; font-size: 1.1rem; }
+.modal-hint { font-size: 0.8rem; color: var(--muted); margin: 0 0 0.75rem; }
+.modal-list {
+  overflow-y: auto;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 0.5rem 0;
+  margin-bottom: 1rem;
+}
+.modal-list-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.4rem 0.1rem;
+  font-size: 0.88rem;
+}
+.modal-list-row input { flex-shrink: 0; }
+.modal-list-row label { flex: 1; word-break: break-word; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 0.5rem; }
+.modal-btn {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--card-bg);
+  color: var(--fg);
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+.modal-btn.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
 .mode-btn.active { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
 #review-shuffle-btn { margin-left: auto; cursor: pointer; }
 

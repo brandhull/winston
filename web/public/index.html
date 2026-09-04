@@ -41,6 +41,7 @@
         <option value="uncommented">No comment yet</option>
         <option value="commented">Commented</option>
       </select>
+      <button id="manage-books-btn" class="manage-books-btn" title="Manage books">⚙</button>
     </div>
     <div id="all-list" class="list"></div>
   </section>
@@ -53,6 +54,18 @@
     </div>
     <div id="review-list" class="list"></div>
   </section>
+</div>
+
+<div id="manage-books-modal" class="modal-overlay hidden">
+  <div class="modal">
+    <h2>Manage Books</h2>
+    <p class="modal-hint">Unchecked books are hidden from the book list, highlights list, review, and search.</p>
+    <div id="manage-books-list" class="modal-list"></div>
+    <div class="modal-actions">
+      <button id="manage-books-cancel" class="modal-btn">Cancel</button>
+      <button id="manage-books-save" class="modal-btn primary">Save</button>
+    </div>
+  </div>
 </div>
 
 <script src="/app.js"></script>

@@ -15,6 +15,7 @@
   const state = {
     pin: localStorage.getItem(PIN_KEY) || '',
     highlights: [],
+    hiddenBooks: new Set(),
     reviewMode: 'today',
     reviewSet: [],
   };
@@ -79,7 +80,12 @@
     setupSync();
 
     try {
-      state.highlights = await api('/api/highlights');
+      const [highlights, hiddenBooks] = await Promise.all([
+        api('/api/highlights'),
+        api('/api/hidden-books').catch(() => []),
+      ]);
+      state.highlights = highlights;
+      state.hiddenBooks = new Set(hiddenBooks);
     } catch (err) {
       const msg =
         "Can't load your highlights right now — Baserow (the backend this app relies on) seems to be down. Try refreshing in a few minutes.";
@@ -89,6 +95,7 @@
     }
 
     populateBookFilter();
+    setupManageBooks();
     $('#book-filter').addEventListener('change', renderAllTab);
     $('#status-filter').addEventListener('change', renderAllTab);
     $('#search-input').addEventListener('input', renderAllTab);
@@ -171,18 +178,84 @@
   }
 
   function populateBookFilter() {
+    const select = $('#book-filter');
+    const previousValue = select.value;
+    select.innerHTML = '<option value="">All books</option>';
+
     const seen = new Map();
     for (const h of state.highlights) {
+      if (state.hiddenBooks.has(h.book_title)) continue;
       seen.set(h.book_title, (seen.get(h.book_title) || 0) + 1);
     }
     const sorted = [...seen].sort((a, b) => a[0].localeCompare(b[0]));
-    const select = $('#book-filter');
     for (const [title, count] of sorted) {
       const opt = document.createElement('option');
       opt.value = title;
       opt.textContent = `${title} (${count})`;
       select.appendChild(opt);
     }
+    if (seen.has(previousValue)) select.value = previousValue;
+  }
+
+  // ---------- Manage Books ----------
+  function setupManageBooks() {
+    const modal = $('#manage-books-modal');
+    const list = $('#manage-books-list');
+
+    $('#manage-books-btn').addEventListener('click', () => {
+      const counts = new Map();
+      for (const h of state.highlights) {
+        counts.set(h.book_title, (counts.get(h.book_title) || 0) + 1);
+      }
+      const sorted = [...counts].sort((a, b) => a[0].localeCompare(b[0]));
+
+      list.innerHTML = '';
+      sorted.forEach(([title, count], i) => {
+        const row = document.createElement('div');
+        row.className = 'modal-list-row';
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.checked = !state.hiddenBooks.has(title);
+        checkbox.id = `book-check-${i}`;
+        checkbox.dataset.title = title;
+
+        const label = document.createElement('label');
+        label.htmlFor = checkbox.id;
+        label.textContent = `${title} (${count})`;
+
+        row.appendChild(checkbox);
+        row.appendChild(label);
+        list.appendChild(row);
+      });
+
+      modal.classList.remove('hidden');
+    });
+
+    $('#manage-books-cancel').addEventListener('click', () => {
+      modal.classList.add('hidden');
+    });
+
+    $('#manage-books-save').addEventListener('click', async () => {
+      const hidden = [...list.querySelectorAll('input[type="checkbox"]')]
+        .filter((cb) => !cb.checked)
+        .map((cb) => cb.dataset.title);
+
+      try {
+        await api('/api/hidden-books', {
+          method: 'POST',
+          body: JSON.stringify({ hiddenBooks: hidden }),
+        });
+        state.hiddenBooks = new Set(hidden);
+        modal.classList.add('hidden');
+        populateBookFilter();
+        renderAllTab();
+        buildReviewSet();
+        renderReviewTab();
+      } catch (err) {
+        alert('Could not save — check connection.');
+      }
+    });
   }
 
   // ---------- All Highlights tab ----------
@@ -191,7 +264,7 @@
     const statusFilter = $('#status-filter').value;
     const query = $('#search-input').value.trim().toLowerCase();
 
-    let filtered = state.highlights;
+    let filtered = state.highlights.filter((h) => !state.hiddenBooks.has(h.book_title));
     if (bookFilter) filtered = filtered.filter((h) => h.book_title === bookFilter);
     if (statusFilter === 'uncommented') filtered = filtered.filter((h) => !h.comment);
     if (statusFilter === 'commented') filtered = filtered.filter((h) => !!h.comment);
@@ -391,7 +464,7 @@
   }
 
   function buildReviewSet({ forceReshuffle = false } = {}) {
-    const starred = state.highlights.filter((h) => h.starred);
+    const starred = state.highlights.filter((h) => h.starred && !state.hiddenBooks.has(h.book_title));
     if (starred.length === 0) {
       state.reviewSet = [];
       return;
@@ -430,7 +503,7 @@
 
     const items = state.reviewMode === 'today'
       ? state.reviewSet
-      : state.highlights.filter((h) => h.starred);
+      : state.highlights.filter((h) => h.starred && !state.hiddenBooks.has(h.book_title));
 
     if (items.length === 0) {
       container.innerHTML = state.reviewMode === 'today'
