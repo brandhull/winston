@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const { chromium } = require('playwright');
 const { highlightUid } = require('./highlight-uid');
-const { fetchExistingUids, insertRows } = require('./baserow');
+const { fetchExistingUids, insertRows, getHiddenBooks } = require('./baserow');
 
 const NOTEBOOK_URL = 'https://read.amazon.com/notebook';
 const STORAGE_STATE_PATH = path.join(__dirname, 'auth-state.json');
@@ -97,8 +97,12 @@ async function loadAllHighlights(page) {
   }
 }
 
-async function scrapeBook(page, bookRow) {
-  const title = (await bookRow.locator(SEL.bookTitle).first().innerText()).trim();
+async function getBookTitle(bookRow) {
+  return (await bookRow.locator(SEL.bookTitle).first().innerText()).trim();
+}
+
+async function scrapeBook(page, bookRow, knownTitle) {
+  const title = knownTitle || (await getBookTitle(bookRow));
   const authorRaw = await bookRow
     .locator(SEL.bookAuthor)
     .first()
@@ -160,32 +164,48 @@ async function runSync({ interactive = true, log = console.log, maxBooks = null 
     const existingUids = await fetchExistingUids();
     log(`Found ${existingUids.size} existing highlights.`);
 
+    const hiddenBooks = await getHiddenBooks().catch(() => new Set());
+    if (hiddenBooks.size > 0) {
+      log(`${hiddenBooks.size} book(s) hidden via Manage Books — these will be skipped entirely.`);
+    }
+
     await loadAllBooks(page, log);
-    let bookCount = await page.locator(SEL.bookRow).count();
-    log(`Found ${bookCount} books in your Kindle library.`);
+    const totalBookCount = await page.locator(SEL.bookRow).count();
+    log(`Found ${totalBookCount} books in your Kindle library.`);
 
     // Amazon's library list is sorted with the most recently highlighted/added
     // books first, so capping here covers "what did I just highlight" without
-    // a full sweep of the whole library.
-    if (maxBooks && bookCount > maxBooks) {
-      log(`Limiting to the ${maxBooks} most recently active books for a faster sync.`);
-      bookCount = maxBooks;
+    // a full sweep of the whole library. Hidden books don't count against the
+    // cap, so it always reflects books you actually care about.
+    if (maxBooks) {
+      log(`Limiting to the ${maxBooks} most recently active (non-hidden) book(s) for a faster sync.`);
     }
 
     const cappedBooks = [];
     const syncedAt = new Date().toISOString().slice(0, 10);
     let totalInserted = 0;
+    let processed = 0;
+    let skippedHidden = 0;
 
-    for (let i = 0; i < bookCount; i++) {
+    for (let i = 0; i < totalBookCount; i++) {
+      if (maxBooks && processed >= maxBooks) break;
+
       const bookRow = page.locator(SEL.bookRow).nth(i);
+      const title = await getBookTitle(bookRow).catch(() => '');
+      if (title && hiddenBooks.has(title)) {
+        skippedHidden++;
+        continue;
+      }
+
       let scraped;
       try {
-        scraped = await scrapeBook(page, bookRow);
+        scraped = await scrapeBook(page, bookRow, title);
       } catch (err) {
         log(`  Skipping a book — couldn't scrape it: ${err.message || err}`);
         continue;
       }
-      const { title, author, highlights, capped } = scraped;
+      processed++;
+      const { author, highlights, capped } = scraped;
 
       if (capped) cappedBooks.push(title);
 
@@ -217,12 +237,15 @@ async function runSync({ interactive = true, log = console.log, maxBooks = null 
     }
 
     log(`${totalInserted} new highlight(s) inserted.`);
+    if (skippedHidden > 0) {
+      log(`Skipped ${skippedHidden} hidden book(s).`);
+    }
     if (cappedBooks.length > 0) {
       log("WARNING: these books may have hit Amazon's per-book highlight export cap:");
       for (const title of cappedBooks) log(`  - ${title}`);
     }
 
-    return { totalInserted, cappedBooks, bookCount };
+    return { totalInserted, cappedBooks, bookCount: processed, skippedHidden };
   } finally {
     if (context) await context.close();
     await browser.close();

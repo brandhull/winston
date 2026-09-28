@@ -97,4 +97,16 @@ async function setSyncStatus(rowId, fields) {
   return res.json();
 }
 
-module.exports = { fetchExistingUids, insertRows, getSyncStatus, setSyncStatus };
+/** Fetch the set of book titles hidden via the web app's Manage Books modal. */
+async function getHiddenBooks() {
+  const row = await getSyncStatus();
+  if (!row || !row.hidden_books) return new Set();
+  try {
+    const parsed = JSON.parse(row.hidden_books);
+    return new Set(Array.isArray(parsed) ? parsed : []);
+  } catch {
+    return new Set();
+  }
+}
+
+module.exports = { fetchExistingUids, insertRows, getSyncStatus, setSyncStatus, getHiddenBooks };
